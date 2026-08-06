@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Property Details | Dacha Stays</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="css/styles.css?v=5">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <a href="index.html">Dacha <span>Stays</span></a>
+        </div>
+        <div class="nav-links">
+            <!-- Injected by auth.js -->
+        </div>
+    </nav>
+
+    <main class="container" id="mainContainer" style="display: none;">
+        
+        <!-- Image Gallery injected via JS -->
+        <div class="gallery" id="galleryContainer"></div>
+
+        <div class="detail-grid">
+            <section class="property-info-text">
+                <div id="scarcityBanners" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;"></div>
+                <h1 class="property-title" id="propTitle">Loading...</h1>
+                <div class="property-location" id="propLocation"></div>
+                <p class="property-description" id="propDesc"></p>
+            </section>
+
+            <aside class="widget sticky-widget">
+                <div class="price-header">
+                    $<span id="propPrice">0</span> <span>/ night</span>
+                </div>
+
+                <form id="bookingForm">
+                    <div class="form-group">
+                        <label>Check-In</label>
+                        <input type="text" id="checkIn" class="form-input" placeholder="Select Date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Check-Out</label>
+                        <input type="text" id="checkOut" class="form-input" placeholder="Select Date" required>
+                    </div>
+
+                    <div id="statusPanel" class="status-panel">
+                        <div id="statusText">Select dates to check availability</div>
+                        <div id="conflictContainer" class="conflict-dates" style="display: none;">
+                            Conflicts on: <ul id="conflictList"></ul>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="reserveBtn" class="btn-primary" disabled>Reserve Now</button>
+                </form>
+            </aside>
+        </div>
+    </main>
+
+    <div id="loader" class="loader">Loading property details...</div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const propertyId = urlParams.get('id');
+
+            if(!propertyId) {
+                document.getElementById('loader').textContent = "Property not found.";
+                return;
+            }
+
+            // Elements
+            const checkInInput = document.getElementById('checkIn');
+            const checkOutInput = document.getElementById('checkOut');
+            const statusPanel = document.getElementById('statusPanel');
+            const statusText = document.getElementById('statusText');
+            const reserveBtn = document.getElementById('reserveBtn');
+            let pricePerNight = 0;
+
+            // Fetch Property Data
+            try {
+                const response = await fetch(`/property-rental-app/api/property?id=${propertyId}`);
+                if(!response.ok) throw new Error("Not found");
+                const prop = await response.json();
+
+                document.getElementById('propTitle').textContent = prop.title;
+                document.getElementById('propLocation').textContent = prop.locationCity;
+                document.getElementById('propDesc').textContent = prop.description;
+                document.getElementById('propPrice').textContent = prop.pricePerNight;
+                pricePerNight = prop.pricePerNight;
+                document.title = `${prop.title} | Dacha Stays`;
+
+                // Scarcity Engine
+                const scarcityBanners = document.getElementById('scarcityBanners');
+                if (prop.activeViews > 0) {
+                    scarcityBanners.innerHTML += `<div style="background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">🔥 ${prop.activeViews} people are looking at this right now!</div>`;
+                }
+                if (prop.recentBookings > 0) {
+                    scarcityBanners.innerHTML += `<div style="background: #fef9c3; border-left: 4px solid #ca8a04; color: #854d0e; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">⭐ Booked ${prop.recentBookings} times in the last 24 hours</div>`;
+                }
+
+                // Build Gallery
+                const gallery = document.getElementById('galleryContainer');
+                gallery.innerHTML = `<img src="${prop.coverImageUrl}" alt="Cover">`;
+                if(prop.gallery && prop.gallery.length > 0) {
+                    prop.gallery.slice(0, 6).forEach(url => {
+                        gallery.innerHTML += `<img src="${url}" alt="Gallery image">`;
+                    });
+                }
+
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+
+            } catch (e) {
+                document.getElementById('loader').textContent = "Error loading property details.";
+                return;
+            }
+
+            // Live Availability Engine
+            const today = new Date().toISOString().split('T')[0];
+            checkInInput.min = today;
+            checkOutInput.min = today;
+
+            const checkAvailability = async () => {
+                const checkIn = checkInInput.value;
+                const checkOut = checkOutInput.value;
+                if (!checkIn || !checkOut) return;
+                
+                if (checkIn >= checkOut) {
+                    showStatus('error', 'Check-out must be after check-in.');
+                    reserveBtn.disabled = true;
+                    return;
+                }
+
+                showStatus('loading', 'Checking live availability...');
+                reserveBtn.disabled = true;
+
+                try {
+                    const response = await fetch('/property-rental-app/api/check-availability', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ propertyId: propertyId, checkIn: checkIn, checkOut: checkOut })
+                    });
+                    const data = await response.json();
+
+                    if (data.available) {
+                        // Calculate total price preview
+                        const d1 = new Date(checkIn);
+                        const d2 = new Date(checkOut);
+                        const days = (d2 - d1) / (1000 * 60 * 60 * 24);
+                        const total = days * pricePerNight;
+                        showStatus('success', `Available! Total for ${days} nights: $${total.toFixed(2)}`);
+                        reserveBtn.disabled = false;
+                    } else {
+                        showStatus('error', 'Dates unavailable. Conflicts found.');
+                        reserveBtn.disabled = true;
+                    }
+                } catch (error) {
+                    showStatus('error', 'Network error checking availability.');
+                }
+            };
+
+            const showStatus = (state, message) => {
+                statusPanel.className = `status-panel visible ${state}`;
+                statusText.textContent = message;
+            };
+
+            // Initialize Flatpickr
+            const fpCheckOut = flatpickr(checkOutInput, {
+                minDate: today,
+                altInput: true,
+                altFormat: "F j, Y",
+                dateFormat: "Y-m-d",
+                disableMobile: "true",
+                onChange: function(selectedDates, dateStr, instance) {
+                    checkAvailability();
+                }
+            });
+
+            const fpCheckIn = flatpickr(checkInInput, {
+                minDate: today,
+                altInput: true,
+                altFormat: "F j, Y",
+                dateFormat: "Y-m-d",
+                disableMobile: "true",
+                onChange: function(selectedDates, dateStr, instance) {
+                    if(selectedDates[0]) {
+                        let minOut = new Date(selectedDates[0]);
+                        minOut.setDate(minOut.getDate() + 1);
+                        fpCheckOut.set('minDate', minOut);
+                    }
+                    checkAvailability();
+                }
+            });
+
+            document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('reserveBtn');
+                const oldText = btn.textContent;
+                btn.textContent = "Checking Account...";
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch('/property-rental-app/api/auth/me');
+                    const session = await response.json();
+                    
+                    if (session.loggedIn) {
+                        // Redirect to Checkout page with URL params
+                        window.location.href = `Checkout.html?id=${propertyId}&checkIn=${checkInInput.value}&checkOut=${checkOutInput.value}`;
+                    } else {
+                        // User not logged in, redirect to Signup/Login
+                        window.location.href = 'Register.html';
+                    }
+                } catch(err) {
+                    window.location.href = 'Register.html';
+                }
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+</body>
+</html>

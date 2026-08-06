@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard | Dacha Stays</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css?v=2">
+    <style>
+        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 2rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; color: var(--text-primary); }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--glass-border); }
+        th { background: rgba(255,255,255,0.05); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;}
+        tr:hover { background: rgba(255,255,255,0.02); }
+        .badge { padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.8rem; font-weight: 600; }
+        .badge.admin { background: rgba(59, 130, 246, 0.2); color: var(--accent-color); }
+        .badge.host { background: rgba(16, 185, 129, 0.2); color: var(--success-color); }
+        .badge.guest { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <a href="index.html">Dacha <span>Stays</span></a>
+        </div>
+        <div class="nav-links">
+            <span style="color: var(--text-secondary); margin-left: 2rem;">Loading session...</span>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>Admin Control Panel</h1>
+        <p style="color: var(--text-secondary);">Manage users, properties, and system-wide bookings.</p>
+        
+        <div id="loader" class="loader">Fetching system data...</div>
+
+        <div class="dashboard-grid" id="dashboard" style="display: none;">
+            
+            <!-- Bookings Table -->
+            <section class="widget">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2>Recent Bookings</h2>
+                    <a href="AdminBookings.html" class="btn-primary" style="text-decoration: none; padding: 0.5rem 1rem; font-size: 0.9rem;">View All Bookings &rarr;</a>
+                </div>
+                <table>
+                    <thead><tr><th>ID</th><th>Property</th><th>Guest</th><th>Age</th><th>Check-In</th><th>Check-Out</th><th>Total ($)</th><th>Requests</th><th>Status</th></tr></thead>
+                    <tbody id="bookingsTable"></tbody>
+                </table>
+            </section>
+
+            <!-- Properties Table -->
+            <section class="widget">
+                <h2>Active Properties</h2>
+                <table>
+                    <thead><tr><th>ID</th><th>Title</th><th>City</th><th>Price/Night</th></tr></thead>
+                    <tbody id="propsTable"></tbody>
+                </table>
+            </section>
+
+            <!-- Users Table -->
+            <section class="widget">
+                <h2>Registered Users</h2>
+                <table>
+                    <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+                    <tbody id="usersTable"></tbody>
+                </table>
+            <!-- Feedback Table -->
+            <section class="widget">
+                <h2>Customer Feedback</h2>
+                <table>
+                    <thead><tr><th>ID</th><th>Name</th><th>Subject</th><th>Message</th><th>Date</th></tr></thead>
+                    <tbody id="feedbackTable"></tbody>
+                </table>
+            </section>
+
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/property-rental-app/api/admin/dashboard');
+                if(response.status === 403) {
+                    document.getElementById('loader').innerHTML = "<span style='color:var(--error-color)'>Access Denied. You must be an Admin to view this page.</span>";
+                    return;
+                }
+                const data = await response.json();
+                
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'grid';
+
+                // Render Bookings
+                const bTable = document.getElementById('bookingsTable');
+                data.bookings.forEach(b => {
+                    const reqs = b.specialRequests ? b.specialRequests : '-';
+                    const age = b.guestAge ? b.guestAge : '-';
+                    bTable.innerHTML += `<tr><td>#${b.bookingId}</td><td>${b.propertyTitle}</td><td>${b.guestName}</td><td>${age}</td><td>${b.checkIn}</td><td>${b.checkOut}</td><td>$${b.totalPrice}</td><td><small>${reqs}</small></td><td><span class="badge host">${b.status}</span></td></tr>`;
+                });
+
+                // Render Properties
+                const pTable = document.getElementById('propsTable');
+                data.properties.forEach(p => {
+                    pTable.innerHTML += `<tr><td>#${p.propertyId}</td><td>${p.title}</td><td>${p.locationCity}</td><td>$${p.pricePerNight}</td></tr>`;
+                });
+
+                // Render Users
+                const uTable = document.getElementById('usersTable');
+                data.users.forEach(u => {
+                    uTable.innerHTML += `<tr><td>#${u.userId}</td><td>${u.name}</td><td>${u.email}</td><td><span class="badge ${u.role.toLowerCase()}">${u.role}</span></td><td>${u.createdAt.substring(0, 10)}</td></tr>`;
+                });
+
+                // Render Feedback
+                const fTable = document.getElementById('feedbackTable');
+                if (data.feedback && data.feedback.length > 0) {
+                    data.feedback.forEach(f => {
+                        fTable.innerHTML += `<tr><td>#${f.id}</td><td>${f.name}<br><small style="color:var(--text-secondary)">${f.email}</small></td><td><b>${f.subject}</b></td><td>${f.message}</td><td>${f.createdAt.substring(0, 10)}</td></tr>`;
+                    });
+                } else {
+                    fTable.innerHTML = `<tr><td colspan="5" style="text-align:center;">No feedback received yet.</td></tr>`;
+                }
+
+            } catch (e) {
+                document.getElementById('loader').textContent = "Failed to load dashboard data.";
+            }
+        });
+    </script>
+</body>
+</html>

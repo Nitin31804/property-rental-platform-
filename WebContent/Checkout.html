@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Checkout | Dacha Stays</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css?v=2">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <a href="index.html">Dacha <span>Stays</span></a>
+        </div>
+        <div class="nav-links">
+            <!-- Injected by auth.js -->
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1 style="margin-bottom: 2rem;">Confirm and pay</h1>
+        
+        <div class="detail-grid">
+            <!-- Guest & Payment Forms -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                
+                <!-- Guest Details Form -->
+                <section class="widget">
+                    <h2 style="margin-bottom: 1.5rem;">Guest Details</h2>
+                    <div class="form-group">
+                        <label>Primary Guest Full Name</label>
+                        <input type="text" id="guestName" class="form-input" placeholder="e.g. John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Guest Age</label>
+                        <input type="number" id="guestAge" class="form-input" placeholder="e.g. 28" min="18" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Guests Staying</label>
+                        <input type="number" id="guestCount" class="form-input" placeholder="e.g. 2" min="1" required>
+                    </div>
+                </section>
+
+                <!-- Premium Add-ons -->
+                <section class="widget">
+                    <h2 style="margin-bottom: 1.5rem;">Enhance Your Stay</h2>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <label style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; cursor: pointer;">
+                            <div>
+                                <span style="font-weight: 600; display: block;">Extra Mattress</span>
+                                <span style="font-size: 0.85rem; color: var(--text-secondary);">Added comfort for an extra guest</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="font-weight: 600; color: var(--accent-color);">+$50 / night</span>
+                                <input type="checkbox" id="addonMattress" class="addon-cb" data-price="50" data-type="per_night" data-name="Extra Mattress">
+                            </div>
+                        </label>
+                        <label style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; cursor: pointer;">
+                            <div>
+                                <span style="font-weight: 600; display: block;">Airport Transfer</span>
+                                <span style="font-size: 0.85rem; color: var(--text-secondary);">VIP pickup from the airport</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="font-weight: 600; color: var(--accent-color);">+$100 flat</span>
+                                <input type="checkbox" id="addonAirport" class="addon-cb" data-price="100" data-type="flat" data-name="Airport Transfer">
+                            </div>
+                        </label>
+                        <label style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; cursor: pointer;">
+                            <div>
+                                <span style="font-weight: 600; display: block;">Romantic Setup</span>
+                                <span style="font-size: 0.85rem; color: var(--text-secondary);">Champagne and rose petals</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="font-weight: 600; color: var(--accent-color);">+$75 flat</span>
+                                <input type="checkbox" id="addonRomantic" class="addon-cb" data-price="75" data-type="flat" data-name="Romantic Setup">
+                            </div>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- House Rules & Policies -->
+                <section class="widget" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2);">
+                    <h2 style="margin-bottom: 1rem; color: #f59e0b;">House Rules & Policies</h2>
+                    <ul style="font-size: 0.9rem; color: var(--text-secondary); padding-left: 1.5rem; margin-bottom: 1.5rem; line-height: 1.6;">
+                        <li><strong>Cleanliness:</strong> The property must be left reasonably clean when you leave. Please do not leave wrappers or bottles on the bed or floor.</li>
+                        <li><strong>Damages:</strong> Any intentional damage to the property or its contents will result in a fine.</li>
+                        <li><strong>Arrival Tour:</strong> Upon arrival, our staff will give you a proper tour of the property. We do this to verify everything is in perfect condition so you cannot be falsely accused of prior damage.</li>
+                        <li><strong>Departure Check:</strong> Before you leave, our staff will conduct a quick walkthrough to verify everything is still in the right condition.</li>
+                    </ul>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <input type="checkbox" id="agreeRules" required form="paymentForm" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                        <label for="agreeRules" style="font-weight: 600; cursor: pointer;">I agree to the House Rules and acknowledge the inspection policy.</label>
+                    </div>
+                </section>
+
+                <!-- Payment Form -->
+                <section class="widget">
+                    <h2 style="margin-bottom: 1.5rem;">Payment Method</h2>
+                <form id="paymentForm">
+                    <div class="form-group">
+                        <label>Card Number</label>
+                        <input type="text" class="form-input" placeholder="0000 0000 0000 0000" required>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Expiration</label>
+                            <input type="text" class="form-input" placeholder="MM/YY" required>
+                        </div>
+                        <div class="form-group">
+                            <label>CVV</label>
+                            <input type="text" class="form-input" placeholder="123" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Name on Card</label>
+                        <input type="text" class="form-input" placeholder="John Doe" required>
+                    </div>
+
+                    <div id="statusPanel" class="status-panel">
+                        <div id="statusText">Processing...</div>
+                    </div>
+
+                    <button type="submit" id="payBtn" class="btn-primary" form="paymentForm">Confirm Booking</button>
+                </form>
+            </section>
+        </div>
+
+            <!-- Booking Summary -->
+            <aside class="widget sticky-widget">
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Booking Summary</h3>
+                <div class="checkout-summary">
+                    <div class="summary-row">
+                        <span id="propTitle">Loading...</span>
+                    </div>
+                    <div class="summary-row" style="font-size: 0.9rem; margin-top: 1rem;">
+                        <span>Dates:</span>
+                        <span id="dateRange">...</span>
+                    </div>
+                </div>
+                
+                <div class="summary-row">
+                    <span>Nights</span>
+                    <span id="nightsCount">0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Price per night</span>
+                    $<span id="priceNight">0</span>
+                </div>
+                <hr style="border: none; border-bottom: 1px solid var(--glass-border); margin: 1rem 0;">
+                <div id="addonsSummaryContainer"></div>
+                <hr style="border: none; border-bottom: 1px solid var(--glass-border); margin: 1rem 0;">
+                <div class="summary-total">
+                    <span>Total (USD)</span>
+                    $<span id="totalPrice">0</span>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const propertyId = urlParams.get('id');
+            const checkIn = urlParams.get('checkIn');
+            const checkOut = urlParams.get('checkOut');
+
+            if(!propertyId || !checkIn || !checkOut) {
+                alert("Missing booking details. Redirecting home.");
+                window.location.href = 'index.html';
+                return;
+            }
+
+            let basePrice = 0;
+            let finalPrice = 0;
+            let days = 0;
+
+            // Fetch property to calculate price
+            try {
+                const response = await fetch(`/property-rental-app/api/property?id=${propertyId}`);
+                const prop = await response.json();
+                
+                const d1 = new Date(checkIn);
+                const d2 = new Date(checkOut);
+                days = (d2 - d1) / (1000 * 60 * 60 * 24);
+                basePrice = days * prop.pricePerNight;
+
+                document.getElementById('propTitle').textContent = prop.title;
+                document.getElementById('dateRange').textContent = `${checkIn} to ${checkOut}`;
+                document.getElementById('nightsCount').textContent = days;
+                document.getElementById('priceNight').textContent = prop.pricePerNight;
+                
+                updateTotal();
+
+            } catch(e) {
+                alert("Error loading summary");
+            }
+
+            function updateTotal() {
+                let addonsTotal = 0;
+                let addonsHtml = '';
+                document.querySelectorAll('.addon-cb:checked').forEach(cb => {
+                    let cost = parseFloat(cb.getAttribute('data-price'));
+                    let type = cb.getAttribute('data-type');
+                    let name = cb.getAttribute('data-name');
+                    
+                    if (type === 'per_night') {
+                        cost = cost * days;
+                    }
+                    addonsTotal += cost;
+                    addonsHtml += `<div class="summary-row" style="font-size: 0.9rem;"><span>+ ${name}</span>$${cost.toFixed(2)}</div>`;
+                });
+
+                document.getElementById('addonsSummaryContainer').innerHTML = addonsHtml;
+                finalPrice = basePrice + addonsTotal;
+                document.getElementById('totalPrice').textContent = finalPrice.toFixed(2);
+            }
+
+            document.querySelectorAll('.addon-cb').forEach(cb => {
+                cb.addEventListener('change', updateTotal);
+            });
+
+            // Handle Payment
+            const form = document.getElementById('paymentForm');
+            const statusPanel = document.getElementById('statusPanel');
+            const statusText = document.getElementById('statusText');
+            const payBtn = document.getElementById('payBtn');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const guestName = document.getElementById('guestName').value;
+                const guestAge = document.getElementById('guestAge').value;
+                const guestCount = document.getElementById('guestCount').value;
+                
+                if (!guestName || !guestAge || !guestCount) {
+                    alert("Please fill out the Guest Details before confirming.");
+                    return;
+                }
+
+                let specialRequests = Array.from(document.querySelectorAll('.addon-cb:checked'))
+                                         .map(cb => cb.getAttribute('data-name'))
+                                         .join(', ');
+
+                payBtn.disabled = true;
+                payBtn.textContent = "Processing Payment...";
+                statusPanel.className = `status-panel visible loading`;
+                statusText.textContent = "Connecting to secure payment gateway...";
+
+                try {
+                    const response = await fetch('/property-rental-app/api/checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            propertyId, checkIn, checkOut, totalPrice: finalPrice,
+                            guestName, guestAge, specialRequests, guestCount
+                        })
+                    });
+                    
+                    const data = await response.json();
+
+                    if(response.ok && data.success) {
+                        statusPanel.className = `status-panel visible success`;
+                        statusText.textContent = "Payment Successful! Redirecting...";
+                        setTimeout(() => {
+                            window.location.href = `index.html`; // Redirect back home after success
+                        }, 2000);
+                    } else {
+                        throw new Error(data.error || "Payment failed");
+                    }
+                } catch(error) {
+                    statusPanel.className = `status-panel visible error`;
+                    statusText.textContent = error.message;
+                    payBtn.disabled = false;
+                    payBtn.textContent = "Try Again";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up | Dacha Stays</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css?v=2">
+</head>
+<body style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem 0;">
+
+    <div class="widget" style="width: 100%; max-width: 450px;">
+        <h1 style="text-align: center; margin-bottom: 2rem;">Create an Account</h1>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="name" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label>I want to...</label>
+                <select id="role" class="form-input" required style="cursor: pointer;">
+                    <option value="Guest">Book places to stay (Guest)</option>
+                    <option value="Host">List my property (Host)</option>
+                </select>
+            </div>
+            
+            <div id="statusPanel" class="status-panel">
+                <div id="statusText"></div>
+            </div>
+
+            <button type="submit" id="regBtn" class="btn-primary">Sign Up</button>
+        </form>
+        <p style="text-align: center; margin-top: 1.5rem; color: var(--text-secondary);">
+            Already have an account? <a href="Login.html" style="color: var(--accent-color);">Log in</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('regBtn');
+            const status = document.getElementById('statusPanel');
+            const statusText = document.getElementById('statusText');
+
+            btn.disabled = true;
+            status.className = 'status-panel visible loading';
+            statusText.textContent = "Creating account...";
+
+            try {
+                const response = await fetch('/property-rental-app/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('name').value,
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value,
+                        role: document.getElementById('role').value
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    status.className = 'status-panel visible success';
+                    statusText.textContent = "Account created! Redirecting to login...";
+                    setTimeout(() => window.location.href = 'Login.html', 1500);
+                } else {
+                    throw new Error(data.error || "Registration failed");
+                }
+            } catch(err) {
+                status.className = 'status-panel visible error';
+                statusText.textContent = err.message;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
