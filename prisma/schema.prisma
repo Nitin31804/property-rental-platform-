@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  Host
+  Guest
+  Admin
+}
+
+enum BookingStatus {
+  Pending
+  Confirmed
+  Cancelled
+}
+
+model Users {
+  user_id       Int          @id @default(autoincrement())
+  name          String       @db.VarChar(100)
+  email         String       @unique @db.VarChar(150)
+  password_hash String       @db.VarChar(255)
+  role          Role
+  created_at    DateTime?    @default(now()) @db.Timestamp(0)
+  Properties    Properties[]
+  Bookings      Bookings[]
+}
+
+model Properties {
+  property_id     Int              @id @default(autoincrement())
+  host_id         Int
+  title           String           @db.VarChar(200)
+  description     String?          @db.Text
+  price_per_night Decimal          @db.Decimal(10, 2)
+  location_city   String           @db.VarChar(100)
+  cover_image_url String?          @db.VarChar(500)
+  created_at      DateTime?        @default(now()) @db.Timestamp(0)
+  Users           Users            @relation(fields: [host_id], references: [user_id], onDelete: Cascade)
+  Bookings        Bookings[]
+  PropertyImages  PropertyImages[]
+
+  @@index([host_id], map: "host_id")
+}
+
+model PropertyImages {
+  image_id    Int        @id @default(autoincrement())
+  property_id Int
+  image_url   String     @db.VarChar(500)
+  Properties  Properties @relation(fields: [property_id], references: [property_id], onDelete: Cascade)
+
+  @@index([property_id], map: "property_id")
+}
+
+model Bookings {
+  booking_id     Int           @id @default(autoincrement())
+  property_id    Int
+  guest_id       Int
+  check_in_date  DateTime      @db.Date
+  check_out_date DateTime      @db.Date
+  total_price    Decimal       @db.Decimal(10, 2)
+  status         BookingStatus @default(Confirmed)
+  created_at     DateTime?     @default(now()) @db.Timestamp(0)
+  Users          Users         @relation(fields: [guest_id], references: [user_id], onDelete: Cascade)
+  Properties     Properties    @relation(fields: [property_id], references: [property_id], onDelete: Cascade)
+
+  @@index([guest_id], map: "guest_id")
+  @@index([property_id, check_in_date, check_out_date], map: "idx_bookings_dates")
+}
+
+model CustomerFeedback {
+  feedback_id Int       @id @default(autoincrement())
+  name        String    @db.VarChar(100)
+  email       String    @db.VarChar(150)
+  subject     String    @db.VarChar(200)
+  message     String    @db.Text
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+}
+

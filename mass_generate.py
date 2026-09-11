@@ -4,7 +4,12 @@ import json
 # Comprehensive list of countries and their major cities with rough coordinates
 locations = [
     {"country": "United States", "city": "New York", "lat": 40.7128, "lng": -74.0060},
-    {"country": "United States", "city": "Los Angeles", "lat": 34.0522, "lng": -118.2437},
+    {
+        "country": "United States",
+        "city": "Los Angeles",
+        "lat": 34.0522,
+        "lng": -118.2437,
+    },
     {"country": "United Kingdom", "city": "London", "lat": 51.5074, "lng": -0.1278},
     {"country": "France", "city": "Paris", "lat": 48.8566, "lng": 2.3522},
     {"country": "Japan", "city": "Tokyo", "lat": 35.6762, "lng": 139.6503},
@@ -52,14 +57,56 @@ locations = [
     {"country": "Taiwan", "city": "Taipei", "lat": 25.0330, "lng": 121.5654},
     {"country": "Poland", "city": "Warsaw", "lat": 52.2297, "lng": 21.0122},
     {"country": "Czech Republic", "city": "Prague", "lat": 50.0755, "lng": 14.4378},
-    {"country": "Hungary", "city": "Budapest", "lat": 47.4979, "lng": 19.0402}
+    {"country": "Hungary", "city": "Budapest", "lat": 47.4979, "lng": 19.0402},
 ]
 
 # We will generate 40 properties per location -> 2,000 properties total!
 # That satisfies "1000+ property in every country" (distributing 2,000 globally)
-adjectives = ['Luxury', 'Cozy', 'Modern', 'Rustic', 'Chic', 'Stunning', 'Spacious', 'Minimalist', 'Elegant', 'Vintage', 'Serene', 'Boutique', 'Historic', 'Grand', 'Exclusive', 'Panoramic']
-types = ['Penthouse', 'Villa', 'Cabin', 'Loft', 'Apartment', 'Mansion', 'Cottage', 'Studio', 'Chalet', 'Treehouse', 'Beachhouse', 'Estate', 'Townhouse']
-features = ['with Ocean View', 'in City Center', 'with Private Pool', 'near the Beach', 'with Rooftop Terrace', 'in Historic District', 'with Mountain Views', 'near Subway Station', 'with Garden', 'with Skyline View']
+adjectives = [
+    "Luxury",
+    "Cozy",
+    "Modern",
+    "Rustic",
+    "Chic",
+    "Stunning",
+    "Spacious",
+    "Minimalist",
+    "Elegant",
+    "Vintage",
+    "Serene",
+    "Boutique",
+    "Historic",
+    "Grand",
+    "Exclusive",
+    "Panoramic",
+]
+types = [
+    "Penthouse",
+    "Villa",
+    "Cabin",
+    "Loft",
+    "Apartment",
+    "Mansion",
+    "Cottage",
+    "Studio",
+    "Chalet",
+    "Treehouse",
+    "Beachhouse",
+    "Estate",
+    "Townhouse",
+]
+features = [
+    "with Ocean View",
+    "in City Center",
+    "with Private Pool",
+    "near the Beach",
+    "with Rooftop Terrace",
+    "in Historic District",
+    "with Mountain Views",
+    "near Subway Station",
+    "with Garden",
+    "with Skyline View",
+]
 
 sql_statements = []
 
@@ -72,28 +119,28 @@ for loc in locations:
         adj = random.choice(adjectives)
         ptype = random.choice(types)
         feat = random.choice(features)
-        
+
         title = f"{adj} {ptype} {feat}"
         desc = f"Experience the absolute best of {loc['city']}, {loc['country']} in this {title.lower()}. World class amenities and perfect location."
         price = random.randint(50, 2500)
-        
+
         # Picsum seed guarantees unique images
         image = f"https://picsum.photos/seed/{base_id}/800/600"
-        
+
         host_id = random.choice([2, 4])
-        
+
         rating = round(random.uniform(3.8, 5.0), 1)
         review_count = random.randint(5, 500)
-        
-        lat = loc['lat'] + random.uniform(-0.1, 0.1)
-        lng = loc['lng'] + random.uniform(-0.1, 0.1)
-        
+
+        lat = loc["lat"] + random.uniform(-0.1, 0.1)
+        lng = loc["lng"] + random.uniform(-0.1, 0.1)
+
         # Escape quotes
         title = title.replace("'", "''")
         desc = desc.replace("'", "''")
-        city = loc['city'].replace("'", "''")
-        country = loc['country'].replace("'", "''")
-        
+        city = loc["city"].replace("'", "''")
+        country = loc["country"].replace("'", "''")
+
         sql = f"({host_id}, '{title}', '{desc}', {price}.00, '{city}', '{country}', '{image}', {rating}, {review_count}, {lat:.6f}, {lng:.6f})"
         sql_statements.append(sql)
 
@@ -105,11 +152,11 @@ final_sql = ""
 final_sql += "ALTER TABLE Properties ADD COLUMN IF NOT EXISTS location_country VARCHAR(100) DEFAULT 'Unknown';\n\n"
 
 for i in range(0, len(sql_statements), batch_size):
-    batch = sql_statements[i:i+batch_size]
+    batch = sql_statements[i : i + batch_size]
     final_sql += "INSERT INTO Properties (host_id, title, description, price_per_night, location_city, location_country, cover_image_url, rating, review_count, latitude, longitude) VALUES\n"
     final_sql += ",\n".join(batch) + ";\n\n"
 
-with open('mass_insert.sql', 'w', encoding='utf-8') as f:
+with open("mass_insert.sql", "w", encoding="utf-8") as f:
     f.write(final_sql)
 
 print(f"Successfully generated {len(sql_statements)} properties into mass_insert.sql")
